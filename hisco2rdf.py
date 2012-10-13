@@ -1,58 +1,70 @@
 #!/usr/bin/env python
 
-"""hisco2rdf.py: An RDF graph generator for the HISCO occupation system."""
+"""hisco2rdf.py: An RDF graph generator for the HISCO occupations system."""
 
 import csv
 from xlrd import open_workbook
-from rdflib import ConjunctiveGraph, Namespace, Literal, RDF, RDFS, BNode, URIRef
+from rdflib import ConjunctiveGraph, Namespace, Literal, RDF, RDFS
 
-hiBook = open_workbook('data/HISCO.xls', formatting_info=True)
-hiSheet = hiBook.sheet_by_index(0)
+class hisco2rdf:
+    """A HISCO to RDF converter"""
 
-namespaces = {
-    'd2s':Namespace('http://www.data2semantics.org/data/'),
-    'cpm':Namespace('http://cedar-project.nl/harmonization/municipalities/'),
-    'cpv':Namespace('http://cedar-project.nl/harmonization/variables/'),
-    'cpo':Namespace('http://cedar-project.nl/harmonization/occupations/'),
-    'rdfs':Namespace('http://www.w3.org/2000/01/rdf-schema#'),
-}
+    def __init__(self, inputDataFile):
+        """Load input data, initialize namespaces, initialize graph"""
 
-graph = ConjunctiveGraph()
-for namespace in namespaces:
-    graph.namespace_manager.bind(namespace, namespaces[namespace])
+        # Open workbook for input data, error if not an XLS file
+        self.hiscoSourceData = open_workbook(inputDataFile, formatting_info=True)
+        self.hiscoSheet = self.hiscoSourceData.sheet_by_index(0)
+        
+        self.namespaces = {
+            'd2s':Namespace('http://www.data2semantics.org/data/'),
+            'cpm':Namespace('http://cedar-project.nl/harmonization/municipalities/'),
+            'cpv':Namespace('http://cedar-project.nl/harmonization/variables/'),
+            'cpo':Namespace('http://cedar-project.nl/harmonization/occupations/'),
+            }
 
+        self.graph = ConjunctiveGraph()
 
-## Cols to read: [0,1] Rows to read: [2:53216]
-hiCodes = []
-for i in range(1,53216):
-    print i
-    graph.add((
-            namespaces['cpo'][str(hiSheet.cell(i,1).value)],
-            RDF.type,
-            namespaces['cpo']['HISCOOccupation']
-            ))
-    graph.add((
-            namespaces['cpo'][str(hiSheet.cell(i,1).value)],
-            namespaces['cpo']['hasHISCOCode'],
-            Literal(hiSheet.cell(i,1).value)
-            ))
-    graph.add((
-            namespaces['cpo'][str(hiSheet.cell(i,1).value)],
-            namespaces['rdfs']['label'],
-            Literal(hiSheet.cell(i,0).value, lang='nl')
-            ))
+    def buildGraph(self):
+        """Populate the graph with relevant HISCO triples"""
 
-    # Local data structure
-    hiCode = {}
-    hiCode["code"] = str(hiSheet.cell(i,1).value)
-    hiCode["label"] = hiSheet.cell(i,0).value
-    hiCodes.append(hiCode)
+        print "Building RDF graph for HISCO..."
+        
+        for namespace in self.namespaces:
+            self.graph.namespace_manager.bind(namespace, self.namespaces[namespace])
 
-# Serialize
-fileWrite = open('hisco.ttl', "w")
-turtle = graph.serialize(None, format='n3')
-fileWrite.writelines(turtle)
-fileWrite.close()
+        ## Cols to read: [0,1] Rows to read: [2:53216]
+        for i in range(1,53216):
+            self.graph.add((
+                    self.namespaces['cpo'][str(self.hiscoSheet.cell(i,1).value)],
+                    RDF.type,
+                    self.namespaces['cpo']['HISCOOccupation']
+                    ))
+            self.graph.add((
+                    self.namespaces['cpo'][str(self.hiscoSheet.cell(i,1).value)],
+                    self.namespaces['cpo']['hasHISCOCode'],
+                    Literal(self.hiscoSheet.cell(i,1).value)
+                    ))
+            self.graph.add((
+                    self.namespaces['cpo'][str(self.hiscoSheet.cell(i,1).value)],
+                    RDFS.label,
+                    Literal(self.hiscoSheet.cell(i,0).value, lang='nl')
+                    ))
+
+    def serializeGraph(self, outputDataFile):
+        """Serialize the generated graph to the specified output file"""
+
+        print "Serializing graph to {}...".format(outputDataFile)
+
+        self.fileToWrite = open(outputDataFile, "w")
+        self.turtleFile = self.graph.serialize(None, format='n3')
+        self.fileToWrite.writelines(self.turtleFile)
+        self.fileToWrite.close()
+
+if __name__ == "__main__":
+    hiscoRDFGenerator = hisco2rdf('data/HISCO.xls')
+    hiscoRDFGenerator.buildGraph()
+    hiscoRDFGenerator.serializeGraph('hisco.ttl')
 
 
 __author__ = "Albert Meronyo-Penyuela"
