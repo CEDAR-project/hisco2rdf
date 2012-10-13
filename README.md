@@ -4,7 +4,9 @@ hisco2rdf
 Script that generates an RDF graph for the History of Work Information System
 
 **Author**: [Albert Meroño-Peñuela](http://github.com/albertmeronyo)
+
 **Copyright**: VU University Amsterdam
+
 **License**: [LGPL v3.0](http://www.gnu.org/licenses/lgpl.html)
 
 ## What is this?
