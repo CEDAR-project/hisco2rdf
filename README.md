@@ -25,7 +25,7 @@ Currently only the provided HISCO source data file is supported (`data/HISCO.xls
 
 URIs are generated for each HISCO occupation entry (i.e. unique identifier). All related labels are conveniently linked.
 
-<center><img src='http://github.com/CEDAR-project/hisco2rdf/raw/master/img/hisco-datamodel.png'/></center>
+<p align='center'><img src='http://github.com/CEDAR-project/hisco2rdf/raw/master/img/hisco-datamodel.png'/></p>
 
 ## Requirements
 
