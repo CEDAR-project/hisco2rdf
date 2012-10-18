@@ -12,15 +12,12 @@ class hisco2rdf:
     def __init__(self, inputDataFile):
         """Load input data, initialize namespaces, initialize graph"""
 
-        # Open workbook for input data, error if not an XLS file
+        # Open workbook for input data
         self.hiscoSourceData = open_workbook(inputDataFile, formatting_info=True)
         self.hiscoSheet = self.hiscoSourceData.sheet_by_index(0)
         
         self.namespaces = {
-            'd2s':Namespace('http://www.data2semantics.org/data/'),
-            'cpm':Namespace('http://cedar-project.nl/harmonization/municipalities/'),
-            'cpv':Namespace('http://cedar-project.nl/harmonization/variables/'),
-            'cpo':Namespace('http://cedar-project.nl/harmonization/occupations/'),
+            'cpo':Namespace('http://cedar-project.nl/harmonization/occupations/')
             }
 
         self.graph = ConjunctiveGraph()
