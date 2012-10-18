@@ -29,6 +29,6 @@ URIs are generated for each HISCO occupation entry (i.e. unique identifier). All
 
 ## Requirements
 
-* Python 2.7.3
+* Python 2.7
 * xlrd package <http://www.python-excel.org>
 * RDFLib package <http://www.rdflib.net>
