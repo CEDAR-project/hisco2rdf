@@ -63,10 +63,9 @@ class HISCOParser(HTMLParser):
         # HISCO class name
         if self.recordFlag and self.spanFlag and not data.strip() == '':
             self.lastURI = data
-            if len(self.lastURI) == 5:
-                self.boraderURI = self.lastURI[:-2]
-            else:
-                self.broaderURI = self.lastURI[:-1]
+            self.broaderURI = self.lastURI[:-1]
+            if len(self.broaderURI) == 3:
+                self.boraderURI = self.broaderURI[:-1]
             self.graph.add((URIRef('http://historyofwork.iisg.nl/resource/' + str(self.lastURI)),
                             RDF.type,
                             self.namespaces['skos'].Concept))
