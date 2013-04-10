@@ -33,19 +33,23 @@ class HISCOFirstLevelParser(HTMLParser):
             print data
 
 class HISCOParser(HTMLParser):
-    def __init__(self, g, n):
+    def __init__(self, g, n, mt):
         HTMLParser.__init__(self)        
         self.spanFlag = False
         self.recordFlag = False
         self.aFlag = False
         self.tdFlag = False
+        self.detailLinkFlag = False
         self.graph = g
         self.namespaces = n
+        self.multipleTitlesIndices = mt
         self.lastURI = ''
     def handle_starttag(self, tag, attrs):
         if ('class', 'rubri_code') in attrs:
             self.spanFlag = True
             self.recordFlag = True
+        if ('class', 'detaillink') in attrs:
+            self.detailLinkFlag = True
         if tag == 'a':
             self.aFlag = True
         if tag == 'td':
@@ -53,6 +57,7 @@ class HISCOParser(HTMLParser):
     def handle_endtag(self, tag):
         if tag == 'span' or tag == 'p':
             self.spanFlag = False
+            self.detailLinkFlag = False
         if tag == 'tr':
             self.recordFlag = False
         if tag == 'a':
@@ -65,6 +70,7 @@ class HISCOParser(HTMLParser):
             self.lastURI = data
             self.broaderURI = self.lastURI[:-1]
             if len(self.lastURI) == 5:
+                self.multipleTitlesIndices.append(self.lastURI)
                 self.broaderURI = self.lastURI[:-2]
             self.graph.add((URIRef('http://historyofwork.iisg.nl/resource/' + str(self.lastURI)),
                             RDF.type,
@@ -80,6 +86,10 @@ class HISCOParser(HTMLParser):
             self.graph.add((URIRef('http://historyofwork.iisg.nl/resource/' + str(self.lastURI)),
                             self.namespaces['skos']['definition'],
                             Literal(data, 'en')))
+        if not self.recordFlag and self.detailLinkFlag:
+            self.graph.add((URIRef('http://historyofwork.iisg.nl/resource/' + str(self.lastURI)),
+                            self.namespaces['skos']['altLabel'],
+                            Literal(data)))
 
 class hisco2rdf:
     """A HISCO to RDF converter"""
@@ -96,6 +106,7 @@ class hisco2rdf:
         self.totalMicros = 100
         self.startDetailMicro = 35038
         self.endDetailMicro = 36711
+        self.multipleTitlesIndices = []
         self.firstLevelParser = HISCOFirstLevelParser()
         
         self.namespaces = {
@@ -103,7 +114,7 @@ class hisco2rdf:
             'skos':Namespace('http://www.w3.org/2004/02/skos/core#')
             }
 
-        self.parser = HISCOParser(self.graph, self.namespaces)
+        self.parser = HISCOParser(self.graph, self.namespaces, self.multipleTitlesIndices)
 
         self.parseTree()
 
@@ -157,14 +168,23 @@ class hisco2rdf:
             except:
                 pass
 
-        # Parse leaves (detail micros)
-        for i in range(self.startDetailMicro, self.endDetailMicro + 1):
+        # In-step: parse additional titles
+        for i in self.multipleTitlesIndices:
             opener = urllib2.build_opener()
             try:
-                infile = opener.open('http://historyofwork.iisg.nl/detail_micro.php?know_id=' + str(i) + '&lang=')
+                infile = opener.open('http://historyofwork.iisg.nl/list_hiswi.php?text02=' + str(i) + '&&text02_qt=lstrict&orderby=text02')
                 self.parser.feed(infile.read())
             except:
                 pass
+
+        # Parse leaves (detail micros)
+        # for i in range(self.startDetailMicro, self.endDetailMicro + 1):
+        #     opener = urllib2.build_opener()
+        #     try:
+        #         infile = opener.open('http://historyofwork.iisg.nl/detail_micro.php?know_id=' + str(i) + '&lang=')
+        #         self.parser.feed(infile.read())
+        #     except:
+        #         pass
             
     def serializeGraph(self, outputDataFile):
         """Serialize the generated graph to the specified output file"""
